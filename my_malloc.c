@@ -9,6 +9,14 @@ void* my_malloc(size_t size){
 	block_t* previous;
 	while(block != NULL){
 		if(block->free && block->size >= size){
+			if(block->size >= size + sizeof(block_t)) {
+				block->size = size;
+				block_t* split_block = (block_t*)((char*)(block+1) + size);
+				split_block->size = block->size-size-sizeof(block_t);
+				split_block->next = NULL;
+				split_block->free = 1;
+				block->next = split_block;
+			}
 			block->free = 0;
 			return block + 1;
 		}
