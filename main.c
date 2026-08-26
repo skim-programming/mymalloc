@@ -1,12 +1,19 @@
 #include "my_malloc.h"
 #include <stdio.h>
 
+void print_size(size_t size_i){
+	size_t tsize = align_size(size_i);
+	printf("%zu size: %zu\n", size_i, tsize);
+}
+
 int main(){
-	void* a = my_malloc(1000);
-	printf("a address: %p\n", a);
-	my_free(a);
-	void* b = my_malloc(100);
-	void* c = my_malloc(100);
-	printf("b address: %p\nc address: %p\naddress difference: %td\n", b, c, c-b);
+	print_size(1);
+	print_size(2);
+	print_size(7);
+	print_size(8);
+	print_size(9);
+	print_size(15);
+	print_size(16);
+	print_size(17);
 	return 0;
 }

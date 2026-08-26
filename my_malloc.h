@@ -8,6 +8,8 @@ typedef struct block {
 	struct block *next;
 } block_t;
 
+size_t align_size(size_t size);
+
 void* my_malloc(size_t size);
 
 void my_free(void* ptr);

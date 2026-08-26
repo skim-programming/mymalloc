@@ -4,9 +4,17 @@
 
 block_t* head = NULL;
 
+
+#define ALIGNMENT 8
+size_t align_size(size_t size){
+	return (size + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1);
+}
+
+
 void* my_malloc(size_t size){
 	block_t* block = head;
 	block_t* previous;
+	size = align_size(size);
 	while(block != NULL){
 		if(block->free && block->size >= size){
 			if(block->size > size + sizeof(block_t)) {
@@ -25,6 +33,7 @@ void* my_malloc(size_t size){
 	}
 	block_t* new_block;
 	new_block = sbrk(sizeof(block_t) + size);
+	if(new_block == (void*)-1) return NULL;
 	new_block->size = size;
 	new_block->free = 0;
 	new_block->next = NULL;
