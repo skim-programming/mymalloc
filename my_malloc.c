@@ -21,6 +21,8 @@ void* my_malloc(size_t size){
 				block_t* split_block = (block_t*)((char*)(block+1) + size);
 				split_block->size = block->size-size-sizeof(block_t);
 				split_block->next = block->next;
+				split_block->prev = block;
+				if(block->next != NULL) block->next->prev = split_block;
 				split_block->free = 1;
 				block->size = size;
 				block->next = split_block;
@@ -39,9 +41,11 @@ void* my_malloc(size_t size){
 	new_block->next = NULL;
 	if(head == NULL){
 		head = new_block;
+		new_block->prev = NULL;
 	}
 	else{
 		previous->next = new_block;
+		new_block->prev = previous;
 	}
 	return new_block+1;
 }
@@ -52,4 +56,14 @@ void my_free(void* ptr){
 	}
 	block_t* block = (block_t*)ptr - 1;
 	block->free = 1;
+	if(block->next != NULL && (block_t*)((char*)(block+1)+block->size) == block->next && block->next->free){
+		block->size = block->size + block->next->size + sizeof(block_t);
+		block->next = block->next->next;
+		if(block->next != NULL) block->next->prev = block;
+	}
+	if(block->prev != NULL && (block_t*)((char*)(block-1)-block->prev->size) == block->prev && block->prev->free){
+		block->prev->size = block->prev->size + block->size + sizeof(block_t);
+		block->prev->next = block->next;
+		if(block->next != NULL) block->next->prev = block->prev;
+	}
 }

@@ -6,6 +6,7 @@ typedef struct block {
 	size_t size;
 	int free;
 	struct block *next;
+	struct block *prev;
 } block_t;
 
 size_t align_size(size_t size);
