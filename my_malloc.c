@@ -4,12 +4,87 @@
 
 block_t* head = NULL;
 
-
 #define ALIGNMENT 8
 size_t align_size(size_t size){
 	return (size + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1);
 }
 
+size_t get_list_size(block_t* head){
+	block_t* block = head;
+	size_t count = 0;
+	while(block != NULL){
+		block=block->next;
+	}
+	return count;
+}
+
+size_t whats_broken(block_t** list_container){
+	block_t* block = head;
+	size_t broken = 0;
+	size_t i = 0;
+	while(block != NULL){
+		if(block -> next != NULL && block->next->prev != block){
+			list_container[i] = block;
+			broken++;
+		}
+		else if(block->prev != NULL && block->prev->next != block){
+			list_container[i] = block;
+			broken++;
+		}
+		else if(block->next != NULL && (block_t*)((char*)(block+1)+block->size) != block->next){
+			list_container[i] = block;
+			broken++;
+		}
+		else if(block->prev != NULL && (block_t*)((char*)(block-1)-block->prev->size) != block->prev){
+			list_container[i] = block;
+			broken++;
+		}
+		else if(block->next != NULL && block->next->free && block->free){
+			list_container[i] = block;
+			broken++;
+		}
+		else if(block->prev != NULL && block->prev->free && block->free){
+			list_container[i] = block;
+			broken++;
+		}
+		else if(block->size != align_size(block->size)){
+			list_container[i] = block;
+			broken++;
+		}
+		block = block->next;
+		i++;
+	}
+}
+
+size_t check_heap(){
+	size_t error_count = 0;
+	block_t* block = head;
+	while(block != NULL){
+		if(block -> next != NULL && block->next->prev != block){
+			error_count++;
+		}
+		if(block->prev != NULL && block->prev->next != block){
+			error_count++;
+		}
+		if(block->next != NULL && (block_t*)((char*)(block+1)+block->size) != block->next){
+			error_count++;
+		}
+		if(block->prev != NULL && (block_t*)((char*)(block-1)-block->prev->size) != block->prev){
+			error_count++;
+		}
+		if(block->next != NULL && block->next->free && block->free){
+			error_count++;
+		}
+		if(block->prev != NULL && block->prev->free && block->free){
+			error_count++;
+		}
+		if(block->size != align_size(block->size)){
+			error_count++;
+		}
+		block = block->next;
+	}
+	return error_count;
+}
 
 void* my_malloc(size_t size){
 	block_t* block = head;
