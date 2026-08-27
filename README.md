@@ -3,6 +3,6 @@ Custom implementation of malloc for learning purposes
 
 ## Features
 - Block allocation with sbrk()
-- Block freeing & headers
-- Free list
-
+- Block freeing & metadata
+- Doubly linked free list
+- Adjacent block coalescing
