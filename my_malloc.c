@@ -4,7 +4,6 @@
 
 block_t* head = NULL;
 
-#define ALIGNMENT 8
 size_t align_size(size_t size){
 	return (size + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1);
 }
@@ -18,42 +17,40 @@ size_t get_list_size(block_t* head){
 	return count;
 }
 
-size_t whats_broken(block_t** list_container){
+size_t whats_broken(block_error_t* list_container){
 	block_t* block = head;
 	size_t broken = 0;
 	size_t i = 0;
 	while(block != NULL){
-		if(block -> next != NULL && block->next->prev != block){
-			list_container[i] = block;
-			broken++;
+		list_container[i] = (block_error_t){.block = block, .flags = 0};
+		if(block -> next != NULL && block->next->prev != block){ // check if next->prev = block
+			list_container[i].flags |= FLAG_NEXT_LINK;
 		}
-		else if(block->prev != NULL && block->prev->next != block){
-			list_container[i] = block;
-			broken++;
+		if(block->prev != NULL && block->prev->next != block){ // check if prev->next = block
+			list_container[i].flags |= FLAG_PREV_LINK;
 		}
-		else if(block->next != NULL && (block_t*)((char*)(block+1)+block->size) != block->next){
-			list_container[i] = block;
-			broken++;
+		if(block->next != NULL && (block_t*)((char*)(block+1)+block->size) != block->next){ // check if block at next is adjacent
+			list_container[i].flags |= FLAG_NEXT_ADJ;
 		}
-		else if(block->prev != NULL && (block_t*)((char*)(block-1)-block->prev->size) != block->prev){
-			list_container[i] = block;
-			broken++;
+		if(block->prev != NULL && (block_t*)((char*)(block-1)-block->prev->size) != block->prev){ // check if block prev is adjacent
+			list_container[i].flags |= FLAG_PREV_ADJ;
 		}
-		else if(block->next != NULL && block->next->free && block->free){
-			list_container[i] = block;
-			broken++;
+		if(block->next != NULL && block->next->free && block->free){ // check if next is 
+			list_container[i].flags |= FLAG_NEXT_FREE;
 		}
-		else if(block->prev != NULL && block->prev->free && block->free){
-			list_container[i] = block;
-			broken++;
+		if(block->prev != NULL && block->prev->free && block->free){
+			list_container[i].flags |= FLAG_PREV_FREE;
 		}
-		else if(block->size != align_size(block->size)){
-			list_container[i] = block;
+		if(block->size != align_size(block->size)){
+			list_container[i].flags |= FLAG_ALIGNMENT;
+		}
+		if(list_container[i].flags != 0){
 			broken++;
 		}
 		block = block->next;
 		i++;
 	}
+	return broken;
 }
 
 size_t check_heap(){
