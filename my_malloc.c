@@ -23,30 +23,31 @@ size_t whats_broken(block_error_t* list_container){
 	size_t i = 0;
 	while(block != NULL){
 		list_container[i] = (block_error_t){.block = block, .flags = 0};
-		if(block -> next != NULL && block->next->prev != block){ // check if next->prev = block
+	
+		if(block -> next != NULL && block->next->prev != block) // check if next->prev = block
 			list_container[i].flags |= FLAG_NEXT_LINK;
-		}
-		if(block->prev != NULL && block->prev->next != block){ // check if prev->next = block
+
+		if(block->prev != NULL && block->prev->next != block) // check if prev->next = block
 			list_container[i].flags |= FLAG_PREV_LINK;
-		}
-		if(block->next != NULL && (block_t*)((char*)(block+1)+block->size) != block->next){ // check if block at next is adjacent
+		
+		if(block->next != NULL && (block_t*)((char*)(block+1)+block->size) != block->next) // check if block at next is adjacent
 			list_container[i].flags |= FLAG_NEXT_ADJ;
-		}
-		if(block->prev != NULL && (block_t*)((char*)(block-1)-block->prev->size) != block->prev){ // check if block prev is adjacent
+
+		if(block->prev != NULL && (block_t*)((char*)(block-1)-block->prev->size) != block->prev) // check if block prev is adjacent
 			list_container[i].flags |= FLAG_PREV_ADJ;
-		}
-		if(block->next != NULL && block->next->free && block->free){ // check if next is 
+		
+		if(block->next != NULL && block->next->free && block->free) // check if next is 
 			list_container[i].flags |= FLAG_NEXT_FREE;
-		}
-		if(block->prev != NULL && block->prev->free && block->free){
+		
+		if(block->prev != NULL && block->prev->free && block->free)
 			list_container[i].flags |= FLAG_PREV_FREE;
-		}
-		if(block->size != align_size(block->size)){
+		
+		if(block->size != align_size(block->size))
 			list_container[i].flags |= FLAG_ALIGNMENT;
-		}
-		if(list_container[i].flags != 0){
+		
+		if(list_container[i].flags != 0)
 			broken++;
-		}
+		
 		block = block->next;
 		i++;
 	}
@@ -128,6 +129,8 @@ void my_free(void* ptr){
 	}
 	block_t* block = (block_t*)ptr - 1;
 	block->free = 1;
+	
+	// Coalesce blocks
 	if(block->next != NULL && (block_t*)((char*)(block+1)+block->size) == block->next && block->next->free){
 		block->size = block->size + block->next->size + sizeof(block_t);
 		block->next = block->next->next;
@@ -137,5 +140,22 @@ void my_free(void* ptr){
 		block->prev->size = block->prev->size + block->size + sizeof(block_t);
 		block->prev->next = block->next;
 		if(block->next != NULL) block->next->prev = block->prev;
+		block = block->prev;
+	}
+
+	// Decrement program break if possible
+	if(block->next == NULL && (char*)(block+1)+block->size == sbrk(0)){
+		block_t* prev = block->prev;
+		
+		if(sbrk(-(block->size + sizeof(block_t))) == (void*)-1){
+			return;
+		}
+		
+		if(prev == NULL){
+			head = NULL;
+		}
+		else{
+			prev->next = NULL;
+		}
 	}
 }
