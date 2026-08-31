@@ -23,16 +23,16 @@ typedef struct block_error {
 	uint8_t flags;
 } block_error_t;
 
-size_t get_list_size(block_t* head);
-
-size_t whats_broken(block_error_t* list_container);
-
-size_t check_heap();
+extern block_t* head;
 
 #define ALIGNMENT 8
 size_t align_size(size_t size);
 
+size_t block_size(void* ptr);
+
 void* my_malloc(size_t size);
+
+void* my_calloc(size_t num, size_t size);
 
 void my_free(void* ptr);
 
