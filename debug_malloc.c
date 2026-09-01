@@ -1,4 +1,5 @@
 #include "debug_malloc.h"
+#include <stdio.h>
 
 size_t get_list_size(block_t* head){
 	block_t* block = head;
@@ -47,31 +48,57 @@ size_t whats_broken(block_error_t* list_container){
 }
 
 size_t check_heap(){
-	size_t error_count = 0;
+	uint8_t flags = 0;
 	block_t* block = head;
 	while(block != NULL){
-		if(block -> next != NULL && block->next->prev != block){
-			error_count++;
-		}
-		if(block->prev != NULL && block->prev->next != block){
-			error_count++;
-		}
-		if(block->next != NULL && (block_t*)((char*)(block+1)+block->size) != block->next){
-			error_count++;
-		}
-		if(block->prev != NULL && (block_t*)((char*)(block-1)-block->prev->size) != block->prev){
-			error_count++;
-		}
-		if(block->next != NULL && block->next->free && block->free){
-			error_count++;
-		}
-		if(block->prev != NULL && block->prev->free && block->free){
-			error_count++;
-		}
-		if(block->size != align_size(block->size)){
-			error_count++;
-		}
+	
+		if(block -> next != NULL && block->next->prev != block) // check if next->prev = block
+			flags |= FLAG_NEXT_LINK;
+
+		if(block->prev != NULL && block->prev->next != block) // check if prev->next = block
+			flags |= FLAG_PREV_LINK;
+		
+		if(block->next != NULL && (block_t*)((char*)(block+1)+block->size) != block->next) // check if block at next is adjacent
+			flags |= FLAG_NEXT_ADJ;
+
+		if(block->prev != NULL && (block_t*)((char*)(block-1)-block->prev->size) != block->prev) // check if block prev is adjacent
+			flags |= FLAG_PREV_ADJ;
+		
+		if(block->next != NULL && block->next->free && block->free) // check if next is 
+			flags |= FLAG_NEXT_FREE;
+		
+		if(block->prev != NULL && block->prev->free && block->free)
+			flags |= FLAG_PREV_FREE;
+		
+		if(block->size != align_size(block->size))
+			flags |= FLAG_ALIGNMENT;
+		
+		if(flags != 0)
+			break;
 		block = block->next;
 	}
-	return error_count;
+	return flags;
+}
+
+void print_flags(uint8_t flags) {
+    if (flags & FLAG_NEXT_LINK)
+        printf("FLAG_NEXT_LINK\n");
+
+    if (flags & FLAG_PREV_LINK)
+        printf("FLAG_PREV_LINK\n");
+
+    if (flags & FLAG_NEXT_ADJ)
+        printf("FLAG_NEXT_ADJ\n");
+
+    if (flags & FLAG_PREV_ADJ)
+        printf("FLAG_PREV_ADJ\n");
+
+    if (flags & FLAG_NEXT_FREE)
+        printf("FLAG_NEXT_FREE\n");
+
+    if (flags & FLAG_PREV_FREE)
+        printf("FLAG_PREV_FREE\n");
+
+    if (flags & FLAG_ALIGNMENT)
+        printf("FLAG_ALIGNMENT\n");
 }
